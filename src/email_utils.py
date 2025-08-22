@@ -3,6 +3,10 @@ from email.mime.text import MIMEText
 import os
 import pandas as pd
 import config
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def generate_messages(row):
     name = row['name']
@@ -49,15 +53,32 @@ Good luck 🚀"""
     return pd.Series({'email_message': email_message, 'whatsapp_message': whatsapp_message})
 
 def send_email(to_email, body):
-    msg = MIMEText(body, 'plain')  # Use plain text for simplicity
+    msg = MIMEText(body, 'plain')
     msg["Subject"] = config.EMAIL_SUBJECT
     msg["From"] = config.EMAIL_SENDER
-    msg["To"] = to_email  # Now per-user
+    msg["To"] = to_email
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(config.EMAIL_SENDER, os.environ["EMAIL_PASS"])
-            server.sendmail(config.EMAIL_SENDER, to_email, msg.as_string())
+        email_pass = os.environ.get("EMAIL_PASS")
+        if not email_pass:
+            raise ValueError("EMAIL_PASS environment variable is not set")
+
+        # Use SSL (port 465) or TLS (port 587)
+        if config.SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(config.SMTP_HOST, config.SMTP_PORT)
+        else:
+            server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT)
+            server.starttls()  # Enable TLS
+
+        server.login(config.SMTP_USERNAME, email_pass)
+        server.sendmail(config.EMAIL_SENDER, to_email, msg.as_string())
+        server.quit()
         print(f"Email sent successfully to {to_email}")
+    except smtplib.SMTPAuthenticationError:
+        print(f"Authentication failed for {config.SMTP_USERNAME}. Check credentials.")
+    except smtplib.SMTPException as e:
+        print(f"SMTP error sending to {to_email}: {e}")
+    except ValueError as e:
+        print(f"Configuration error: {e}")
     except Exception as e:
-        print(f"Failed to send email to {to_email}: {e}")
+        print(f"Unexpected error sending to {to_email}: {e}")
