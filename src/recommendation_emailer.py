@@ -15,9 +15,9 @@ def main():
     df_recommendations[['email_message', 'whatsapp_message']] = df_recommendations.apply(generate_messages, axis=1, result_type='expand')
     print (df_recommendations.shape)
     # Send emails to each user (loop over rows)
-    # for _, row in df_recommendations.iterrows():
-    #     send_email(row['email'], row['email_message'])
-    send_email(df_recommendations.iloc[-1]['email'], df_recommendations.iloc[-1]['email_message'])
+    for _, row in df_recommendations.tail(4).iterrows():
+        send_email(row['email'], row['email_message'])
+    #send_email(df_recommendations.iloc[-1]['email'], df_recommendations.iloc[-1]['email_message'])
 
 if __name__ == "__main__":
     main()
