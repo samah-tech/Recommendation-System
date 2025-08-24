@@ -22,4 +22,4 @@ jobs:
       - name: Run recommendation script
         env:
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}  # Or SENDGRID_API_KEY
-        run: python src/main.py
+        run: python src/recommendation_emailer.py
